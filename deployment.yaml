@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notre-application
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notre-application
+  template:
+    metadata:
+      labels:
+        app: notre-application
+    spec:
+      containers:
+      - name: notre-application
+        image: notre_application:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+
+        env:
+        - name: APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: notre-application-config
+              key: APP_NAME
+
+        - name: APP_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: notre-application-config
+              key: APP_ENV
+
+        # 🔥 important : mêmes noms que dans main.py
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_HOST
+
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_DB
+
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+
+        volumeMounts:
+        - name: app-storage
+          mountPath: /app/data
+
+      volumes:
+      - name: app-storage
+        persistentVolumeClaim:
+          claimName: notre-pvc
